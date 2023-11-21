@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>CodePen - Boids avoid v1</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bird Flocking Simulation</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      background-color: #282c34;
+      /* Dark background color */
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="boidsCanvas"></canvas>
+  <script>
+    const canvas = document.getElementById("boidsCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const flock = [];
+    const obstacles = [];
+    document.addEventListener("click", initializeNewSetup);
+
+    function initializeNewSetup() {
+      flock.length = 0;
+      const colorScheme = getRandomColorScheme();
+      const particleCount = Math.floor(Math.random() * 5555) + 12;
+      for (let i = 1; i < particleCount; i++) {
+        flock.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: Math.random() * 2 - 9,
+          vy: Math.random() * 2 - 9,
+          color: getRandomColorFromScheme(colorScheme),
+          size: Math.random() * 5 + 2, // Randomize particle size
+        });
+      }
+      obstacles.length = 0;
+      const obstacleCount = Math.floor(Math.random() * 125) + 5;
+      for (let i = 0; i < obstacleCount; i++) {
+        obstacles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 70 + 10, // Randomize obstacle size
+          speed: Math.random() * 2 + 1,
+          angle: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    function getRandomColorScheme() {
+      const colorSchemes = [
+        ['#FF6347', '#FFD700', '#00FA9A', '#4169E1'],
+        ['#FF8C00', '#FF4500', '#8B4513', '#20B2AA'],
+        ['#9932CC', '#8A2BE2', '#7B68EE', '#00CED1'],
+        ['#DC143C', '#FF1493', '#DA70D6', '#FF69B4'],
+        ['#2E8B57', '#3CB371', '#32CD32', '#008000'],
+      ];
+      return colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+    }
+
+    function getRandomColorFromScheme(colorScheme) {
+      return colorScheme[Math.floor(Math.random() * colorScheme.length)];
+    }
+
+    function drawObstacles() {
+      for (const obstacle of obstacles) {
+        ctx.beginPath();
+        ctx.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
+        // Obstacles are invisible, so no fill or stroke
+      }
+    }
+
+    function updateObstacles() {
+      for (const obstacle of obstacles) {
+        obstacle.x += obstacle.speed * Math.cos(obstacle.angle);
+        obstacle.y += obstacle.speed * Math.sin(obstacle.angle);
+        // Bounce off walls
+        if (obstacle.x < 0 || obstacle.x > canvas.width) {
+          obstacle.angle = Math.PI - obstacle.angle;
+        }
+        if (obstacle.y < 0 || obstacle.y > canvas.height) {
+          obstacle.angle = -obstacle.angle;
+        }
+      }
+    }
+
+    function drawBoid(boid) {
+      ctx.beginPath();
+      ctx.arc(boid.x, boid.y, boid.size, 0, Math.PI * 2);
+      ctx.fillStyle = boid.color;
+      ctx.fill();
+    }
+
+    function update() {
+      for (let i = 0; i < flock.length; i++) {
+        const boid = flock[i];
+        boid.vx += Math.random() * 0.2 - 0.1;
+        boid.vy += Math.random() * 0.2 - 0.1;
+        boid.vx *= 0.5;
+        boid.vy *= 0.1;
+        // Allow particles to move away from obstacles
+        for (const obstacle of obstacles) {
+          const dx = boid.x - obstacle.x;
+          const dy = boid.y - obstacle.y;
+          const distance = Math.sqrt(dx ** 2 + dy ** 2);
+          if (distance < obstacle.radius + 244) {
+            boid.vx += dx / distance * 16;
+            boid.vy += dy / distance * .8;
+          }
+        }
+        boid.x += boid.vx;
+        boid.y += boid.vy;
+        // Wrap around if particles go beyond the canvas boundaries
+        if (boid.x < 0 || boid.x > canvas.width || boid.y < 0 || boid.y > canvas.height) {
+          // Reappear in a random location
+          boid.x = Math.random() * canvas.width;
+          boid.y = Math.random() * canvas.height;
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawObstacles();
+      for (let i = 0; i < flock.length; i++) {
+        const boid = flock[i];
+        drawBoid(boid);
+      }
+    }
+
+    function handleResize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initializeNewSetup(); // Reset setup on resize
+    }
+    let frameCount = 1;
+
+    function animate() {
+      frameCount++;
+      updateObstacles();
+      update();
+      draw();
+      requestAnimationFrame(animate);
+    }
+    initializeNewSetup();
+    animate();
+    window.addEventListener("resize", handleResize);
+  </script>
+</body>
+
+</html>
+<!-- partial -->
+  
+</body>
+</html>
